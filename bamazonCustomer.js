@@ -1,6 +1,6 @@
-var mysql = require("mysql");
-// var inquirer = require("inquirer");
-var prompt = require("prompt");
+const mysql = require("mysql");
+const inquirer = require("inquirer");
+const prompt = require("prompt");
 
 // create the connection information for the sql database
 var connection = mysql.createConnection({
@@ -34,26 +34,32 @@ const showProducts = new Promise((resolve, reject) => {
 });
 
 showProducts
-    .then((result) => { console.log(result); })
-
+    .then((result) => {
+        for (var i = 0; i < result.length; i++) {
+            console.log(result[i]);
+        }
+    })
     .then(() => {
-        prompt.get({
-            properties: {
-                item_id: {
-                    description: ("Enter the Item ID of the product you want to buy.")
-                },
-                stock_quantity: {
-                    description: ("How many would you like to buy?")
-                }
+        inquirer.prompt([
+            {
+                type: 'input',
+                name: 'item_id',
+                message: 'Enter the item ID of the product you want to buy.',
+            },
+            {
+                type: 'input',
+                name: 'quantity',
+                message: 'Enter the quantity you want to buy.',
             }
-        }, function (err, result) {
+        ]).then(function (input) {
+            var item = input.item_id;
+            var quantity = input.quantity;
             if (result.stock_quantity < connection.stock_quantity) {
                 console.log("Sorry, we don't have that many in stock.")
             }
             else {
-                console.log("You ordered " + result.stock_quantity + " of item number " + result.item_id + ".");
+                console.log("You ordered " + parseFloat(result.stock_quantity) + " of item number " + parseFloat(result.item_id) + ".");
             }
         })
     });
 
-    
