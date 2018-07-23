@@ -46,11 +46,13 @@ showProducts
                 type: 'input',
                 name: 'item_id',
                 message: 'Enter the item ID of the product you want to buy.',
+                filter: Number
             },
             {
                 type: 'input',
                 name: 'quantity',
                 message: 'Enter how many you want to buy.',
+                filter: Number
             }
         ]).then(function (input) {
             var item = input.item_id;
@@ -83,16 +85,15 @@ showProducts
                         connection.query(updateTheQuery, function (err, data) {
                             if (err) throw err;
 
-                            console.log("Your total is $" + parseFloat(productData.price) * quantity);
+                            console.log("Your total is $" + productData.price * quantity);
                             console.log("Thank you for shopping with Bamazon!");
 
                             // End the database connection
                             connection.end();
                         })
                     } else {
-                        console.log("Sorry, we don't have that many in stock.");
-
-                        showProducts();
+                        console.log("Sorry, we only have " + productData.stock_quantity + " in stock.");
+                        connection.end();
                     }
                 }
             })
