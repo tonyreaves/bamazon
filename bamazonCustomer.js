@@ -22,7 +22,7 @@ connection.connect(function (err) {
 });
 
 
-
+//displays inventory from database
 const showProducts = new Promise((resolve, reject) => {
     connection.query("SELECT item_id, product_name, price FROM products", function (err, result, fields) {
         if (err) {
@@ -33,6 +33,7 @@ const showProducts = new Promise((resolve, reject) => {
     });
 });
 
+//.then makes sure prompt comes after inventory is shown
 showProducts
     .then((result) => {
         for (var i = 0; i < result.length; i++) {
@@ -49,17 +50,52 @@ showProducts
             {
                 type: 'input',
                 name: 'quantity',
-                message: 'Enter the quantity you want to buy.',
+                message: 'Enter how many you want to buy.',
             }
         ]).then(function (input) {
             var item = input.item_id;
             var quantity = input.quantity;
-            if (result.stock_quantity < connection.stock_quantity) {
-                console.log("Sorry, we don't have that many in stock.")
-            }
-            else {
-                console.log("You ordered " + parseFloat(result.stock_quantity) + " of item number " + parseFloat(result.item_id) + ".");
-            }
-        })
-    });
 
+
+            // Check the database
+            var theQuery = 'SELECT * FROM products WHERE ?';
+
+            connection.query(theQuery, { item_id: item }, function (err, data) {
+                if (err) throw err;
+
+                // Makes sure user didn't select invalid ID
+                if (data.length === 0) {
+                    console.log("Invalid Item ID. Choose an ID between 1 and 10");
+                    showProducts();
+
+                } else {
+                    var productData = data[0];
+
+                    // checks if there's enough in stock to fulfill customer's order
+                    if (quantity <= productData.stock_quantity) {
+                        console.log("Your order has been placed.");
+
+                        // Update the database query
+                        var updateTheQuery = 'UPDATE products SET stock_quantity = ' + (productData.stock_quantity - quantity) + ' WHERE item_id = ' + item;
+                        // console.log('updateQueryStr = ' + updateQueryStr);
+
+                        // Update the inventory
+                        connection.query(updateTheQuery, function (err, data) {
+                            if (err) throw err;
+
+                            console.log("Your total is $" + parseFloat(productData.price) * quantity);
+                            console.log("Thank you for shopping with Bamazon!");
+
+                            // End the database connection
+                            connection.end();
+                        })
+                    } else {
+                        console.log("Sorry, we don't have that many in stock.");
+
+                        showProducts();
+                    }
+                }
+            })
+        })
+    }
+    )
